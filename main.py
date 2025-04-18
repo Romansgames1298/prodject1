@@ -1,7 +1,7 @@
 from pygame import *
 import time as t
 from random import *
-
+from math import atan2,sin,cos,fabs,pi
 window_size = (800,800)
 FPS = 60
 volume = 0.10
@@ -10,8 +10,8 @@ clock = time.Clock()
 font.init()
 
 player_size = {
-                "width": round(window_size[0] * .35),
-                "height": round(window_size[1] * .30)
+                "width": round(window_size[0] * .05),
+                "height": round(window_size[1] * .05)
             }
 
 player_pos = {
@@ -20,8 +20,8 @@ player_pos = {
             }
 
 enemy_size = {
-                "width": round(window_size[0] * .30),
-                "height": round(window_size[1] * .20 )
+                "width": round(window_size[0] * .06),
+                "height": round(window_size[1] * .05 )
             }
 
 class GameSprite(sprite.Sprite):
@@ -54,15 +54,17 @@ class Player(GameSprite):
         self.start_t = 0
         self.naw_t = 0
     def update(self, *args, **kwargs):
+        pos_mouse = mouse.get_pos()
+
         self.show()
         keys = key.get_pressed()
-        if keys[K_a]:
+        if keys[K_a] and self.rect.x > 0:
             self.rect.x += -self.speed 
-        if keys[K_d]:
+        if keys[K_d] and self.rect.x < window_size[0]:
             self.rect.x += self.speed 
-        if keys[K_w]:
+        if keys[K_w] and self.rect.y > 0:
             self.rect.y += -self.speed
-        if keys[K_s]:
+        if keys[K_s] and self.rect.y < window_size[1] - self.rect.height:
             self.rect.y += self.speed
 
         if keys[K_SPACE]:
@@ -79,40 +81,85 @@ class Player(GameSprite):
         return super().update(*args, **kwargs)
 
     def fire(self):
+        pos_mouse = mouse.get_pos()
+        dx = pos_mouse[0] - self.rect.centerx
+        dy = pos_mouse[1] - self.rect.centery
+        direction = atan2(dy, dx)
+
         bullet = Bullet("екк.png",
-                        pos=[self.rect.centerx - 15,
-                             self.rect.y + 100],
+                        pos=[self.rect.centerx - 14,
+                             self.rect.centery - 14],
                         size=[self.rect.width * .10,
                               self.rect.height * .15],
-                        speed = 10)
+                        speed = 10,
+                        direction=direction)
         self.bullet_list.add(bullet)
+
+
+
 class Bullet(GameSprite):
+    def __init__(self, img, pos, size, speed, direction):
+        super().__init__(img, pos, size, speed)
+        self.dx = cos(direction) * self.speed
+        self.dy = sin(direction) * self.speed
+
     def update(self, *args, **kwargs):
         self.show()
-        self.rect.x += self.speed
+        self.rect.x += self.dx
+        self.rect.y += self.dy
 
-        if self.rect.y < -self.rect.height:
+        if self.rect.y < -self.rect.height or self.rect.y > window_size[1] or self.rect.x < -self.rect.width or self.rect.x > window_size[0]:
             self.kill()
-
 
         return super().update(*args, **kwargs)
 
+
 class Enemy(GameSprite):
-    def __init__(self, img, size=[0, 0], speed=5):
+    def __init__(self, img, size=[0, 0], speed=4):
         super().__init__(img, [1, 1], size, speed)
+        self.dx = 0
+        self.dy = 0
         self.respawn()
 
     def respawn(self):
-        self.rect.x = randint(0, window_size[0] - self.rect.width)
-        self.rect.y = randint(0, window_size[1]  -self.rect.height)
+        pos_start = randint(1, 4)
+        if pos_start == 1:
+            self.rect.x = randint(0, window_size[0])
+            self.rect.y = -self.rect.height
+        elif pos_start == 2:
+            self.rect.x = window_size[0]
+            self.rect.y = randint(0, window_size[1])
+        elif pos_start == 3:
+            self.rect.x = randint(0, window_size[0])
+            self.rect.y = window_size[1]  + self.rect.height
+        elif pos_start == 4:
+            self.rect.x = -self.rect.width
+            self.rect.y = randint(0, window_size[1])
     
+    def move(self):
+        self.rect.x += self.dx
+        self.rect.y += self.dy
+
+    def setMove(self,pos):
+        x =  pos[0] - self.rect.centerx
+        y =  pos[1] - self.rect.centery
+        radian = atan2(y, x)
+        #deegrees = radian * 180/pi
+        #self.image = transform.rotate(self.image,degrees)
+        self.dx = cos(radian) * self.speed
+        self.dy = sin(radian) * self.speed
+
     def update(self, *args, **kwargs):
         self.show()
+        if "player_pos" in kwargs:
+            self.setMove(kwargs["player_pos"])
+        
+        self.move()
 
         return super().update(*args, **kwargs)
 
 window = display.set_mode(window_size)
-background = transform.scale(image.load("1673908920_2-zefirka-club-p-igrovoe-pole-vid-sverkhu-2.jpg"), window_size)
+background = transform.scale(image.load("1673908942_49-zefirka-club-p-igrovoe-pole-vid-sverkhu-56.jpg"), window_size)
 
 display.set_caption("game")
 monsters = sprite.Group()
@@ -143,7 +190,7 @@ while game:
     if run_game:
         player.show()
         player.update()
-        monsters.update()
+        monsters.update(player_pos = [player.rect.centerx, player.rect.centery])
         monsters.draw(window)
         player.bullet_list.update()
         list_collide_kill = sprite.groupcollide(player.bullet_list, monsters,True, True)
@@ -152,7 +199,7 @@ while game:
                 m = Enemy("Без_названия__2_-removebg-preview.png",
                     size = (enemy_size["width"],
                             enemy_size["height"]),
-                    speed = 5)
+                    speed = 4)
                 monsters.add(m)
 
     display.update()
