@@ -67,7 +67,7 @@ class Player(GameSprite):
         if keys[K_s] and self.rect.y < window_size[1] - self.rect.height:
             self.rect.y += self.speed
 
-        if keys[K_SPACE]:
+        if mouse.get_pressed()[0]:
 
             self.naw_t = t.time()
             if self.naw_t - self.start_t >= self.gcd:
@@ -182,6 +182,15 @@ run_game = True
 game = True
 clock = time.Clock()
 
+fontText = font.Font(None,80)
+font2Text = font.Font(None,40)
+winNum = 0
+loseNum = 5
+loseText = fontText.render("Game over ",True,(255,100,100))
+isLose = False
+isWin = False
+
+
 while game:
     for ev in event.get():
         if ev.type == QUIT:
@@ -196,11 +205,34 @@ while game:
         list_collide_kill = sprite.groupcollide(player.bullet_list, monsters,True, True)
         for collide in list_collide_kill:
             for i in list_collide_kill[collide]:
+                winNum += 1
                 m = Enemy("Без_названия__2_-removebg-preview.png",
                     size = (enemy_size["width"],
                             enemy_size["height"]),
                     speed = 4)
                 monsters.add(m)
+        list_collide_kill = sprite.spritecollide(player, monsters, True)
+        for collide in list_collide_kill:
+            loseNum -= 1
+            m = Enemy("Без_названия__2_-removebg-preview.png",
+                size = (enemy_size["width"],
+                        enemy_size["height"]),
+                speed = 4)
+            monsters.add(m)
+
+
+        loseNumText = font2Text.render("HP:"+str(loseNum),True,(150,150,150))
+        window.blit(loseNumText, (10,20))
+
+        winNumText = font2Text.render("KILL:"+str(winNum),True,(150,150,150))
+        window.blit(winNumText, (10,50))
+        if loseNum <= 0:
+            run_game = False
+            isWin = False
+    else:
+        window.blit(loseText,(window_size[0] * .50 - loseNumText.get_width() * .50,
+                              window_size[1] * .50 - loseNumText.get_height() * .50))
+
 
     display.update()
     clock.tick(FPS)
