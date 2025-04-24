@@ -35,13 +35,19 @@ class GameSprite(sprite.Sprite):
         size = [W,H]; """
         super().__init__()
 
-        self.image = transform.scale(image.load(img), size)
+        self.base_image = transform.scale(image.load(img), size)
+        self.image = self.base_image
         self.rect = self.image.get_rect()
         self.rect.x = pos[0]
         self.rect.y = pos[1] 
         speed/FPS
         self.speed = speed 
-   
+    def getAngl(self, pos):
+        x =  pos[0] - self.rect.centerx
+        y =  pos[1] - self.rect.centery
+        radian = atan2(x, y)
+        degrees = radian * 180/pi
+        return degrees -90
     def show(self):
         window.blit(self.image, (self.rect.x, self.rect.y))
 
@@ -59,6 +65,8 @@ class Player(GameSprite):
         self.naw_t = 0
     def update(self, *args, **kwargs):
         pos_mouse = mouse.get_pos()
+        degrees = self.getAngl(pos_mouse)
+        self.image = transform.rotate(self.base_image,degrees)
 
         self.show()
         keys = key.get_pressed()
@@ -99,8 +107,8 @@ class Player(GameSprite):
         direction = atan2(dy, dx)
 
         bullet = Bullet("екк.png",
-                        pos=[self.rect.centerx - 14,
-                             self.rect.centery - 14],
+                        pos=[self.rect.centerx,
+                             self.rect.centery],
                         size=[self.rect.width * .10,
                               self.rect.height * .15],
                         speed = 10,
@@ -156,16 +164,19 @@ class Enemy(GameSprite):
         x =  pos[0] - self.rect.centerx
         y =  pos[1] - self.rect.centery
         radian = atan2(y, x)
-        #deegrees = radian * 180/pi
-        #self.image = transform.rotate(self.image,degrees)
+        #
         self.dx = cos(radian) * self.speed
         self.dy = sin(radian) * self.speed
+
+
 
     def update(self, *args, **kwargs):
         self.show()
         if "player_pos" in kwargs:
+            degrees = self.getAngl(kwargs["player_pos"])
             self.setMove(kwargs["player_pos"])
-        
+            
+            self.image = transform.rotate(self.base_image,degrees)
         self.move()
 
         return super().update(*args, **kwargs)
@@ -213,7 +224,7 @@ while game:
         pos = mouse.get_pos()
         radian, angl = Player.get_degrees([player.rect.x, player.rect.y], pos)
         transform.rotate(player.image, angle=angl)
-        window.blit(player, (player.rect.centerx, player.rect.centery))
+
         player.update()
         angl += 1
         monsters.update(player_pos = [player.rect.centerx, player.rect.centery])
