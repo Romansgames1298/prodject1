@@ -2,6 +2,8 @@ from pygame import *
 import time as t
 from random import *
 from math import atan2,sin,cos,fabs,pi
+import os 
+
 window_size = (800,800)
 FPS = 60
 volume = 0.10
@@ -23,6 +25,8 @@ enemy_size = {
                 "width": round(window_size[0] * .06),
                 "height": round(window_size[1] * .05 )
             }
+
+player = transform.scale(image.load("gamer-removebg-preview.png"), (player_size["width"], player_size["height"]))
 
 class GameSprite(sprite.Sprite):
     def __init__(self, img:str, pos = [0, 0], size = [0, 0], speed = 5):
@@ -80,6 +84,14 @@ class Player(GameSprite):
                 mixer.music.play()
         return super().update(*args, **kwargs)
 
+    def get_degrees(start,end):
+        x = start[0] - end[0]
+        y = start[1] - end[1]
+
+        radian = atan2(x,y)
+        degrees = radian * 180/pi
+        return radian , degrees + 90
+
     def fire(self):
         pos_mouse = mouse.get_pos()
         dx = pos_mouse[0] - self.rect.centerx
@@ -95,7 +107,7 @@ class Player(GameSprite):
                         direction=direction)
         self.bullet_list.add(bullet)
 
-
+angl = 0
 
 class Bullet(GameSprite):
     def __init__(self, img, pos, size, speed, direction):
@@ -198,7 +210,12 @@ while game:
     window.blit(background, (0,0))
     if run_game:
         player.show()
+        pos = mouse.get_pos()
+        radian, angl = Player.get_degrees([player.rect.x, player.rect.y], pos)
+        transform.rotate(player.image, angle=angl)
+        window.blit(player, (player.rect.centerx, player.rect.centery))
         player.update()
+        angl += 1
         monsters.update(player_pos = [player.rect.centerx, player.rect.centery])
         monsters.draw(window)
         player.bullet_list.update()
