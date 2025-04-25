@@ -12,7 +12,7 @@ clock = time.Clock()
 font.init()
 
 player_size = {
-                "width": round(window_size[0] * .05),
+                "width": round(window_size[0] * .06),
                 "height": round(window_size[1] * .05)
             }
 
@@ -204,14 +204,17 @@ player = Player("gamer-removebg-preview.png",
 run_game = True
 game = True
 clock = time.Clock()
-
+font3Text = font.Font(None,40)
 fontText = font.Font(None,80)
 font2Text = font.Font(None,40)
 winNum = 0
 loseNum = 5
+winText = fontText.render("YOU WIN",True,(100,255,100))
 loseText = fontText.render("Game over ",True,(255,100,100))
 isLose = False
 isWin = False
+timeNum = 30
+time_tick = t.time()
 
 
 while game:
@@ -248,9 +251,21 @@ while game:
                 speed = 4)
             monsters.add(m)
 
+        ctime = t.time()
+        if ctime - time_tick >= 1:
+            timeNum -= int(ctime - time_tick)
+            time_tick = ctime
+
+            if timeNum <= 0:
+                timeNum = 0
+                run_game = False
+                isWin = True
 
         loseNumText = font2Text.render("HP:"+str(loseNum),True,(150,150,150))
         window.blit(loseNumText, (10,20))
+
+        timeNumText = font3Text.render("Time::"+str(timeNum),True,(150,150,150))
+        window.blit(timeNumText, (10,80))
 
         winNumText = font2Text.render("KILL:"+str(winNum),True,(150,150,150))
         window.blit(winNumText, (10,50))
@@ -258,7 +273,11 @@ while game:
             run_game = False
             isWin = False
     else:
-        window.blit(loseText,(window_size[0] * .50 - loseNumText.get_width() * .50,
+        if isWin:
+            window.blit(winText,(window_size[0] * .50 - winNumText.get_width() * .50,
+                              window_size[1] * .50 - winNumText.get_height() * .50))
+        else:
+            window.blit(loseText,(window_size[0] * .50 - loseNumText.get_width() * .50,
                               window_size[1] * .50 - loseNumText.get_height() * .50))
 
 
