@@ -257,10 +257,15 @@ while game:
             time_tick = ctime
 
             if timeNum <= 0:
-                timeNum = 0
-                run_game = False
-                isWin = True
-
+                if winNum >= 20:
+                    timeNum = 0
+                    run_game = False
+                    isWin = True
+                else:
+                    timeNum = 0
+                    run_game = False
+                    isWin = False
+                
         loseNumText = font2Text.render("HP:"+str(loseNum),True,(150,150,150))
         window.blit(loseNumText, (10,20))
 
