@@ -10,6 +10,8 @@ volume = 0.10
 mixer.init()
 clock = time.Clock()
 font.init()
+level = 0
+level_list = ["1673908942_49-zefirka-club-p-igrovoe-pole-vid-sverkhu-56.jpg"]
 
 player_size = {
                 "width": round(window_size[0] * .06),
@@ -185,6 +187,7 @@ window = display.set_mode(window_size)
 background = transform.scale(image.load("1673908942_49-zefirka-club-p-igrovoe-pole-vid-sverkhu-56.jpg"), window_size)
 
 display.set_caption("game")
+
 monsters = sprite.Group()
 for i in range(2):
     m = Enemy("Без_названия__2_-removebg-preview.png",
@@ -215,8 +218,10 @@ isLose = False
 isWin = False
 timeNum = 30
 time_tick = t.time()
-
-
+cd = 60
+start_time = t.time()
+new_time = start_time
+start_time = t.time()
 while game:
     for ev in event.get():
         if ev.type == QUIT:
@@ -251,25 +256,15 @@ while game:
                 speed = 4)
             monsters.add(m)
 
-        ctime = t.time()
-        if ctime - time_tick >= 1:
-            timeNum -= int(ctime - time_tick)
-            time_tick = ctime
-
-            if timeNum <= 0:
-                if winNum >= 20:
-                    timeNum = 0
-                    run_game = False
-                    isWin = True
-                else:
-                    timeNum = 0
-                    run_game = False
-                    isWin = False
+        new_time = t.time()
+        if new_time - start_time >= cd:
+            run_game = False
+            isWin = False
                 
         loseNumText = font2Text.render("HP:"+str(loseNum),True,(150,150,150))
         window.blit(loseNumText, (10,20))
 
-        timeNumText = font3Text.render("Time::"+str(timeNum),True,(150,150,150))
+        timeNumText = font3Text.render("Time::"+str(round(new_time - start_time)),True,(150,150,150))
         window.blit(timeNumText, (10,80))
 
         winNumText = font2Text.render("KILL:"+str(winNum),True,(150,150,150))
@@ -277,13 +272,55 @@ while game:
         if loseNum <= 0:
             run_game = False
             isWin = False
+        if winNum >= 20:
+            timeNum = 0
+            run_game = False
+            isWin = True
     else:
         if isWin:
             window.blit(winText,(window_size[0] * .50 - winNumText.get_width() * .50,
                               window_size[1] * .50 - winNumText.get_height() * .50))
+            level += 1
+            if level > len(level_list) - 1:
+                level = 0
         else:
             window.blit(loseText,(window_size[0] * .50 - loseNumText.get_width() * .50,
                               window_size[1] * .50 - loseNumText.get_height() * .50))
+            monsters = sprite.Group()
+            keys = key.get_pressed()
+            if keys[K_r]:
+                for i in range(2):
+                    m = Enemy("Без_названия__2_-removebg-preview.png",
+                                size = (enemy_size["width"],
+                                        enemy_size["height"]),
+                                speed = 4)
+                    monsters.add(m)
+
+                player = Player("gamer-removebg-preview.png",
+                                pos = (player_pos["x"],
+                                       player_pos["y"]),
+
+                                size = (player_size["width"],
+                                        player_size["height"])
+                            )
+
+                run_game = True
+                game = True
+                clock = time.Clock()
+                font3Text = font.Font(None,40)
+                fontText = font.Font(None,80)
+                font2Text = font.Font(None,40)
+                winNum = 0
+                loseNum = 5
+                winText = fontText.render("YOU WIN",True,(100,255,100))
+                loseText = fontText.render("Game over ",True,(255,100,100))
+                isLose = False
+                isWin = False
+                timeNum = 30
+                time_tick = t.time()
+                cd = 60
+                new_time = start_time
+                start_time = t.time()
 
 
     display.update()
